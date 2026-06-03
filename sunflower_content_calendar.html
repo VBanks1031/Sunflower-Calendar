@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunflower by Eva — Content Calendar Builder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Nunito+Sans:wght@300;400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #D4A017;
+    --gold-light: #FDF6DC;
+    --gold-mid: #F5E6B8;
+    --green: #2D5A27;
+    --green-light: #EEF4ED;
+    --cream: #FFF8E7;
+    --terra: #C27C5B;
+    --sage: #A8BDA0;
+    --dark: #1A1A1A;
+    --gray: #666666;
+    --gray-light: #F5F5F0;
+    --border: #E8E0D0;
+    --amber: #E67E22;
+    --amber-light: #FFF8F0;
+    --radius: 12px;
+    --shadow: 0 2px 20px rgba(212,160,23,0.08);
+  }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  .app-header {
+    background: var(--green);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .app-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--gold);
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .app-header .subtitle {
+    color: var(--sage);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    color: #fff;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--sage);
+  }
+  .status-dot.connected { background: #6FCF97; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+  .section {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    color: var(--green);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title .step-num {
+    background: var(--green);
+    color: var(--gold);
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .section-desc {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #b8880f; transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--border); color: var(--gray); cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: var(--green-light);
+    color: var(--green);
+    border: 1px solid var(--sage);
+  }
+  .btn-secondary:hover { background: var(--sage); color: #fff; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--green);
+    border: 1.5px solid var(--green);
+  }
+  .btn-outline:hover { background: var(--green-light); }
+
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 0.78rem;
+  }
+
+  .google-btn {
+    background: #fff;
+    color: var(--dark);
+    border: 1.5px solid var(--border);
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+  .google-btn:hover { background: var(--gray-light); border-color: var(--gray); }
+
+  .google-btn img { width: 20px; height: 20px; }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"], input[type="number"], select {
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--dark);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--gold);
+  }
+
+  input[type="text"] { flex: 1; min-width: 260px; }
+
+  .exclusion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--gold-light);
+    border: 1px solid var(--gold-mid);
+    color: #7a5800;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--amber);
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .folder-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--green-light);
+    border: 1px solid var(--sage);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+  }
+
+  .folder-icon {
+    font-size: 1.4rem;
+  }
+
+  .folder-details { flex: 1; }
+  .folder-name { font-weight: 600; font-size: 0.9rem; color: var(--green); }
+  .folder-count { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 1rem;
+  }
+
+  .photo-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    aspect-ratio: 1;
+    background: var(--gray-light);
+  }
+
+  .photo-card:hover { border-color: var(--gold); transform: scale(1.02); }
+  .photo-card.selected { border-color: var(--gold); }
+  .photo-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 6px; right: 6px;
+    background: var(--gold);
+    color: #fff;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .photo-card.excluded {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .photo-card.excluded::before {
+    content: '✕';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 1.5rem;
+    z-index: 2;
+  }
+
+  .photo-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .photo-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    color: #fff;
+    font-size: 0.6rem;
+    padding: 12px 6px 5px;
+    line-height: 1.2;
+    word-break: break-all;
+  }
+
+  .pillar-badge {
+    position: absolute;
+    top: 6px; left: 6px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    z-index: 3;
+  }
+
+  .pillar-ritual { background: var(--gold); color: #fff; }
+  .pillar-education { background: var(--green); color: #fff; }
+  .pillar-eva { background: var(--terra); color: #fff; }
+  .pillar-community { background: #5B8A6F; color: #fff; }
+  .pillar-culture { background: #9B7FB6; color: #fff; }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+
+  .cal-header {
+    background: var(--green);
+    color: #fff;
+    padding: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .cal-week-label {
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  .cal-cell {
+    background: #fff;
+    padding: 10px;
+    min-height: 100px;
+  }
+
+  .cal-date {
+    font-size: 0.7rem;
+    color: var(--gray);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .cal-post {
+    background: var(--gold-light);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 6px 6px 0;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .cal-post:hover { background: var(--gold-mid); }
+
+  .cal-post.story { border-left-color: var(--terra); background: #FFF0E8; }
+  .cal-post.reel { border-left-color: var(--green); background: var(--green-light); }
+
+  .cal-post .post-type {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray);
+    margin-bottom: 2px;
+  }
+
+  .cal-post .post-title {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 3px;
+  }
+
+  .cal-post .post-pillar {
+    font-size: 0.6rem;
+    color: var(--gray);
+  }
+
+  .post-detail-panel {
+    background: var(--cream);
+    border: 1.5px solid var(--gold-mid);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .post-detail-panel.visible { display: block; }
+
+  .post-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+  }
+
+  .post-detail-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .post-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    background: var(--green-light);
+    color: var(--green);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .caption-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--dark);
+    white-space: pre-wrap;
+  }
+
+  .hashtag-row {
+    font-size: 0.78rem;
+    color: var(--gold);
+    font-weight: 600;
+    line-height: 1.8;
+    margin-top: 0.5rem;
+  }
+
+  .progress-bar {
+    background: var(--border);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .loading-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--gray);
+  }
+
+  .loading-state .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--gold-mid);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sunflower-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .alert {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .alert-info { background: var(--gold-light); border-left: 3px solid var(--gold); color: #7a5800; }
+  .alert-success { background: var(--green-light); border-left: 3px solid var(--green); color: var(--green); }
+  .alert-error { background: #FEE; border-left: 3px solid #e53e3e; color: #c53030; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1.5px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+
+  .tab {
+    padding: 8px 18px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1.5px;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Nunito Sans', sans-serif;
+  }
+  .tab.active { color: var(--green); border-bottom-color: var(--gold); }
+  .tab:hover { color: var(--green); }
+
+  .export-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--gray-light);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+
+  .hidden { display: none !important; }
+
+  #auth-section { text-align: center; padding: 3rem 2rem; }
+
+  .auth-hero {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    color: var(--green);
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-sub {
+    color: var(--gray);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  .scope-list {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    margin-bottom: 2rem;
+    background: var(--green-light);
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+  }
+
+  .scope-item {
+    font-size: 0.82rem;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scope-item::before { content: '🌿'; font-size: 0.9rem; }
+
+  .step-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--gray);
+  }
+
+  .step-item.done { color: var(--green); }
+  .step-item.active { color: var(--gold); font-weight: 600; }
+
+  .step-item .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .step-item.done .dot { background: var(--green); }
+  .step-item.active .dot { background: var(--gold); }
+
+  .arrow { color: var(--border); margin: 0 6px; font-size: 0.8rem; }
+
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <h1>🌻 Sunflower by Eva</h1>
+    <div class="subtitle">Content Calendar Builder</div>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot" id="conn-dot"></div>
+    <span id="conn-label">Not connected</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 0: AUTH -->
+  <div class="section" id="auth-section">
+    <div class="auth-hero">Connect Your Google Drive</div>
+    <div class="auth-sub">Authenticate once to give this app read-only access to your photo library. Your credentials stay in your browser and are never sent anywhere except Google.</div>
+
+    <div class="scope-list">
+      <div class="scope-item">Read-only access to your Google Drive files</div>
+      <div class="scope-item">Browse folders and view photo thumbnails</div>
+      <div class="scope-item">No uploads, no deletions, no changes to your Drive</div>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <label style="font-size:0.82rem; color:var(--gray); display:block; margin-bottom:8px; font-weight:600;">Enter your Google OAuth Client ID</label>
+      <div class="input-row" style="justify-content:center;">
+        <input type="text" id="client-id-input" placeholder="your-client-id.apps.googleusercontent.com" style="max-width:440px;" />
+        <button class="btn btn-primary" onclick="initAuth()">🌻 Connect Drive</button>
+      </div>
+      <div class="alert alert-info" style="max-width:480px; margin:10px auto 0;">
+        <strong>How to get your Client ID:</strong> Go to <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--gold);">console.cloud.google.com</a> → Create Project → Enable Drive API → Create OAuth 2.0 credentials → Add this page's URL as an authorized origin. Then paste the Client ID above.
+      </div>
+    </div>
+
+    <div style="color:var(--gray); font-size:0.78rem; margin-top:1rem;">
+      Or if you already have a token:
+      <button class="btn btn-sm btn-outline" style="margin-left:8px;" onclick="document.getElementById('token-section').classList.toggle('hidden')">Use access token directly</button>
+    </div>
+    <div id="token-section" class="hidden" style="margin-top:12px;">
+      <div class="input-row" style="justify-content:center;">
+        <input type="text" id="token-input" placeholder="Paste your Google OAuth access token..." style="max-width:440px;" />
+        <button class="btn btn-primary" onclick="useToken()">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKFLOW (hidden until auth) -->
+  <div id="workflow" class="hidden">
+
+    <!-- STEP 1: FOLDER -->
+    <div class="section">
+      <div class="section-title">
+        <span class="step-num">1</span>
+        Select Your Content Folder
+      </div>
+      <div class="section-desc">Enter the name of your Google Drive folder containing the Sunflower content gallery.</div>
+
+      <div class="input-row">
+        <input type="text" id="folder-name-input" value="SUNFLOWER CONTENT GALLERY" placeholder="Folder name..." />
+        <button class="btn btn-primary" onclick="findFolder()">🔍 Find Folder</button>
+      </div>
+
+      <div id="folder-result"></div>
+    </div>
+
+    <!-- STEP 2: EXCLUSIONS -->
+    <div class="section" id="exclusion-section" style="display:none;">
+      <div class="section-title">
+        <span class="step-num">2</span>
+        Exclusion List
+      </div>
+      <div class="section-desc">These photos are already excluded. Add more by filename if needed.</div>
+
+      <div class="exclusion-tags" id="exclusion-tags"></div>
+
+      <div class="input-row" style="margin-top:12px;">
+        <input type="text" id="excl-input" placeholder="Add filename to exclude..." />
+        <button class="btn btn-sm btn-secondary" onclick="addExclusion()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: BROWSE & SELECT -->
+    <div class="section" id="browse-section" style="display:none;">
+      <div class="section-title">
+        <span class="step-num">3</span>
+        Browse & Select Photos
+      </div>
+      <div class="section-desc">Photos are loaded from your Drive folder. Excluded files are dimmed. Click to select/deselect. The AI will analyze selected photos and assign them to content pillars.</div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="filterPhotos('all', this)">All Photos</button>
+        <button class="tab" onclick="filterPhotos('selected', this)">Selected (<span id="sel-count">0</span>)</button>
+        <button class="tab" onclick="filterPhotos('excluded', this)">Excluded</button>
+      </div>
+
+      <div id="photo-grid-wrap">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <div>Loading photos from Drive...</div>
+          <div class="progress-bar" style="max-width:200px;margin:10px auto 0;">
+            <div class="progress-fill" id="load-progress" style="width:0%"></div>
+          </div>
+          <div id="load-status" style="font-size:0.75rem;margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-primary" id="analyze-btn" onclick="analyzeSelected()" disabled>
+          🌻 Analyze & Build Calendar
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="selectAll()">Select All Eligible</button>
+        <button class="btn btn-outline btn-sm" onclick="clearSelection()">Clear Selection</button>
+        <span style="font-size:0.8rem; color:var(--gray); margin-left:auto;" id="sel-summary"></span>
+      </div>
+    </div>
+
+    <!-- STEP 4: CALENDAR -->
+    <div class="section" id="calendar-section" style="display:none;">
+      <div class="section-title">
+        <span class="step-num">4</span>
+        90-Day Content Calendar
+      </div>
+
+      <div id="generating-state" class="loading-state">
+        <div class="spinner"></div>
+        <div id="gen-status">Analyzing photos and building your calendar...</div>
+        <div class="progress-bar" style="max-width:300px;margin:10px auto 0;">
+          <div class="progress-fill" id="gen-progress" style="width:10%"></div>
+        </div>
+      </div>
+
+      <div id="calendar-output" class="hidden">
+        <div class="stats-row" id="cal-stats"></div>
+
+        <div class="tabs">
+          <button class="tab active" onclick="showCalView('grid', this)">Calendar View</button>
+          <button class="tab" onclick="showCalView('list', this)">List View</button>
+        </div>
+
+        <div id="cal-grid-view"></div>
+        <div id="cal-list-view" class="hidden"></div>
+
+        <div class="post-detail-panel" id="post-detail"></div>
+
+        <div class="export-row">
+          <button class="btn btn-primary" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-secondary" onclick="exportJSON()">⬇ Export JSON</button>
+          <button class="btn btn-outline" onclick="copyAll()">📋 Copy All Captions</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const EXCLUDED = new Set([
+  'H3A9529','H3A9507','H3A9486','H3A0161','H3A0142','H3A0125','H3A0123',
+  '6-DSC09079','16-DSC09089','19-DSC09092','20-DSC09093','22-DSC09095',
+  '23-DSC09096','25-DSC09098','31-DSC09104','38-DSC09111','39-DSC09112',
+  '41-DSC09114','47-DSC09121','83-DSC09165','98-DSC09181','104-DSC09187',
+  '112-DSC09197','254-DSC09367','265-DSC09378','299-DSC09428','301-DSC09430'
+]);
+
+let accessToken = null;
+let folderId = null;
+let allPhotos = [];
+let selectedPhotos = new Set();
+let calendarData = [];
+let currentFilter = 'all';
+
+function isExcluded(name) {
+  const base = name.replace(/\.[^.]+$/, '');
+  for (const ex of EXCLUDED) {
+    if (base.includes(ex) || ex.includes(base)) return true;
+  }
+  return false;
+}
+
+async function initAuth() {
+  const clientId = document.getElementById('client-id-input').value.trim();
+  if (!clientId) { alert('Please enter your Google OAuth Client ID.'); return; }
+
+  const redirectUri = window.location.href.split('?')[0].split('#')[0];
+  const scope = 'https://www.googleapis.com/auth/drive.readonly';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=consent`;
+
+  localStorage.setItem('sfx_client_id', clientId);
+  window.location.href = authUrl;
+}
+
+function useToken() {
+  const t = document.getElementById('token-input').value.trim();
+  if (!t) return;
+  setToken(t);
+}
+
+function setToken(t) {
+  accessToken = t;
+  document.getElementById('conn-dot').classList.add('connected');
+  document.getElementById('conn-label').textContent = 'Drive connected';
+  document.getElementById('auth-section').classList.add('hidden');
+  document.getElementById('workflow').classList.remove('hidden');
+  renderExclusionTags();
+}
+
+function checkHashToken() {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  if (token) {
+    history.replaceState(null, '', window.location.pathname);
+    setToken(token);
+  }
+}
+
+function renderExclusionTags() {
+  const container = document.getElementById('exclusion-tags');
+  container.innerHTML = '';
+  for (const ex of EXCLUDED) {
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = `${ex} <button onclick="removeExclusion('${ex}')" title="Remove">×</button>`;
+    container.appendChild(tag);
+  }
+}
+
+function addExclusion() {
+  const val = document.getElementById('excl-input').value.trim();
+  if (val) { EXCLUDED.add(val); document.getElementById('excl-input').value = ''; renderExclusionTags(); renderPhotoGrid(); }
+}
+
+function removeExclusion(name) {
+  EXCLUDED.delete(name);
+  renderExclusionTags();
+  renderPhotoGrid();
+}
+
+async function findFolder() {
+  const name = document.getElementById('folder-name-input').value.trim();
+  if (!name || !accessToken) return;
+
+  const res = document.getElementById('folder-result');
+  res.innerHTML = '<div class="loading-state" style="padding:1rem;"><div class="spinner"></div><div>Searching Drive...</div></div>';
+
+  try {
+    const q = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const resp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType)`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const data = await resp.json();
+
+    if (!data.files || data.files.length === 0) {
+      res.innerHTML = `<div class="alert alert-error">Folder "${name}" not found. Make sure it's in your Drive (not just a shortcut — try "Add to My Drive" first).</div>`;
+      return;
+    }
+
+    const folder = data.files[0];
+    folderId = folder.id;
+
+    res.innerHTML = `
+      <div class="folder-info">
+        <div class="folder-icon">📁</div>
+        <div class="folder-details">
+          <div class="folder-name">${folder.name}</div>
+          <div class="folder-count">Found — loading contents...</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadPhotos()">Load Photos →</button>
+      </div>`;
+
+    document.getElementById('exclusion-section').style.display = 'block';
+    document.getElementById('browse-section').style.display = 'block';
+
+  } catch(e) {
+    res.innerHTML = `<div class="alert alert-error">Error: ${e.message}. Check your access token and try again.</div>`;
+  }
+}
+
+async function loadPhotos() {
+  if (!folderId || !accessToken) return;
+
+  const wrap = document.getElementById('photo-grid-wrap');
+  wrap.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Loading photos from Drive...</div><div class="progress-bar" style="max-width:200px;margin:10px auto 0;"><div class="progress-fill" id="load-progress" style="width:5%"></div></div><div id="load-status" style="font-size:0.75rem;margin-top:6px;"></div></div>';
+
+  allPhotos = [];
+  let pageToken = null;
+  let page = 0;
+
+  try {
+    do {
+      let url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${folderId}' in parents and trashed=false and (mimeType contains 'image/' or mimeType contains 'video/')`)}&fields=files(id,name,mimeType,thumbnailLink,webContentLink,size),nextPageToken&pageSize=100`;
+      if (pageToken) url += `&pageToken=${pageToken}`;
+
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const data = await resp.json();
+
+      if (data.files) allPhotos.push(...data.files);
+      pageToken = data.nextPageToken;
+      page++;
+
+      const prog = document.getElementById('load-progress');
+      const stat = document.getElementById('load-status');
+      if (prog) prog.style.width = Math.min(90, page * 15) + '%';
+      if (stat) stat.textContent = `${allPhotos.length} files found...`;
+
+    } while (pageToken);
+
+    const prog = document.getElementById('load-progress');
+    if (prog) prog.style.width = '100%';
+
+    setTimeout(() => renderPhotoGrid(), 300);
+
+  } catch(e) {
+    wrap.innerHTML = `<div class="alert alert-error">Failed to load photos: ${e.message}</div>`;
+  }
+}
+
+function renderPhotoGrid() {
+  const wrap = document.getElementById('photo-grid-wrap');
+
+  if (allPhotos.length === 0) {
+    wrap.innerHTML = '<div class="alert alert-info">No image or video files found in this folder.</div>';
+    return;
+  }
+
+  let toShow = allPhotos;
+  if (currentFilter === 'selected') toShow = allPhotos.filter(p => selectedPhotos.has(p.id));
+  if (currentFilter === 'excluded') toShow = allPhotos.filter(p => isExcluded(p.name));
+
+  const grid = document.createElement('div');
+  grid.className = 'photo-grid';
+
+  for (const photo of toShow) {
+    const excl = isExcluded(photo.name);
+    const sel = selectedPhotos.has(photo.id);
+    const isVid = photo.mimeType && photo.mimeType.includes('video');
+
+    const card = document.createElement('div');
+    card.className = `photo-card${excl ? ' excluded' : ''}${sel ? ' selected' : ''}`;
+    card.dataset.id = photo.id;
+    if (!excl) card.onclick = () => togglePhoto(photo.id, card);
+
+    const thumb = photo.thumbnailLink
+      ? `<img src="${photo.thumbnailLink.replace('=s220', '=s400')}" alt="${photo.name}" loading="lazy" />`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem;">${isVid ? '🎬' : '🖼'}</div>`;
+
+    const baseName = photo.name.replace(/\.[^.]+$/, '');
+    card.innerHTML = `${thumb}<div class="photo-label">${baseName}</div>`;
+    grid.appendChild(card);
+  }
+
+  wrap.innerHTML = '';
+  wrap.appendChild(grid);
+  updateSelectionUI();
+}
+
+function togglePhoto(id, card) {
+  if (selectedPhotos.has(id)) { selectedPhotos.delete(id); card.classList.remove('selected'); }
+  else { selectedPhotos.add(id); card.classList.add('selected'); }
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const count = selectedPhotos.size;
+  document.getElementById('sel-count').textContent = count;
+  document.getElementById('sel-summary').textContent = `${count} photo${count !== 1 ? 's' : ''} selected`;
+  document.getElementById('analyze-btn').disabled = count === 0;
+}
+
+function selectAll() {
+  for (const p of allPhotos) {
+    if (!isExcluded(p.name)) selectedPhotos.add(p.id);
+  }
+  renderPhotoGrid();
+}
+
+function clearSelection() {
+  selectedPhotos.clear();
+  renderPhotoGrid();
+}
+
+function filterPhotos(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderPhotoGrid();
+}
+
+const PILLARS = [
+  { id: 'ritual', label: 'Ritual & Routine', cls: 'pillar-ritual', color: '#D4A017' },
+  { id: 'education', label: 'Education & Science', cls: 'pillar-education', color: '#2D5A27' },
+  { id: 'eva', label: "Eva's World", cls: 'pillar-eva', color: '#C27C5B' },
+  { id: 'community', label: 'Community & Impact', cls: 'pillar-community', color: '#5B8A6F' },
+  { id: 'culture', label: 'Culture & Beauty', cls: 'pillar-culture', color: '#9B7FB6' }
+];
+
+const POST_TYPES = ['Feed Photo', 'Feed Photo', 'Feed Photo', 'Reel', 'Story'];
+
+const CAPTIONS = {
+  ritual: [
+    "Golden hour belongs to you. 🌻 This is your moment — no apologies, no explanations. Just you, your ritual, and the light you deserve.",
+    "She doesn't rush the mornings she makes for herself. Drop it in your coffee. Breathe. Begin. This is what intention looks like.",
+    "The quiet hours after the house settles — that's when she blooms. A ritual built for your peace, not your performance.",
+    "Not a habit. A practice. There's a difference, and you already know it. Find your light, every single day. 🌿"
+  ],
+  education: [
+    "Terpenes aren't just fragrance — they're the language your body already speaks. D-Limonene lifts. β-Caryophyllene grounds. Eclipse speaks both.",
+    "CBN for rest. CBG for focus. CBD for balance. Plant medicine is specific when you let it be. Your ritual, your chemistry.",
+    "Not all indica is a couch. Not all sativa is anxiety. The conversation starts with terpenes, and we're here to have it.",
+    "Golden Hour carries Linalool — the same terpene in lavender that signals your nervous system to soften. This isn't magic. It's botany."
+  ],
+  eva: [
+    "She built this brand from a real place — the farm, the plant, the truth she'd been carrying for years. Sunflower is her story told out loud.",
+    "Being a mother didn't make this harder. It made it more necessary. Eva built Sunflower so no woman has to choose between her wellness and her identity.",
+    "From the fields of Georgia to your kitchen counter. This is what it looks like when you grow something with intention.",
+    "Eva said: I'm not hiding anymore. And then she built an entire brand so you wouldn't have to either. That's what this is. 🌻"
+  ],
+  community: [
+    "A portion of every purchase funds expungement for people still paying for what's now legal. Every Sunflower moment is an act of community. 🌿",
+    "Black maternal health. Women's mental wellness. Food security. The Sunflower Initiative exists because healing one heals many.",
+    "We're planting seeds in the ground and in the community. Meals on Wheels. Expungement clinics. Women's spaces. This is the root system.",
+    "She shouldn't still be paying for it. Justice & expungement support, built into every bloom. This is what purpose-driven looks like."
+  ],
+  culture: [
+    "Golden light. Botanical textures. A woman who knows exactly what she's reaching for. This is the aesthetic of intentional living.",
+    "The sunflower doesn't chase the light — it turns toward it naturally. So do you. So do we. Find your light. 🌻",
+    "Your kitchen counter. Your nightstand. Your bathroom shelf. Products you're proud to leave out because they were made for you.",
+    "There is nothing to hide here. Cannabis in the light, for the woman who already knows her worth."
+  ]
+};
+
+const HASHTAGS = {
+  ritual: '#SunflowerByEva #FindYourLight #PlantMedicine #CannabisMoms #CannabisRitual #WomenWhoBloom #IntentionalLiving #BloomWithPurpose 🌻',
+  education: '#SunflowerByEva #Terpenes #CannabisEducation #PlantMedicine #KnowYourPlant #CannabisWellness #FindYourLight #BloomWithPurpose',
+  eva: '#SunflowerByEva #EvaMariclle #FounderStory #WomenInCannabis #AuthenticBrand #PlantMedicine #FindYourLight 🌻',
+  community: '#SunflowerByEva #SunflowerInitiative #CannabisJustice #WomensWellness #Expungement #CommunityHealing #BloomWithPurpose',
+  culture: '#SunflowerByEva #GoldenHour #BotanicalAesthetics #CannabisLifestyle #FindYourLight #WomenWhoBloom #IntentionalLiving 🌻'
+};
+
+async function analyzeSelected() {
+  if (selectedPhotos.size === 0) return;
+
+  document.getElementById('calendar-section').style.display = 'block';
+  document.getElementById('generating-state').style.display = 'block';
+  document.getElementById('calendar-output').classList.add('hidden');
+
+  const statusEl = document.getElementById('gen-status');
+  const progEl = document.getElementById('gen-progress');
+
+  const steps = [
+    [15, 'Reading photo metadata...'],
+    [30, 'Analyzing visual content for brand fit...'],
+    [50, 'Assigning content pillars...'],
+    [65, 'Building 90-day posting schedule...'],
+    [80, 'Writing captions in Sunflower voice...'],
+    [92, 'Generating hashtag sets...'],
+    [100, 'Calendar ready 🌻']
+  ];
+
+  for (const [pct, msg] of steps) {
+    await new Promise(r => setTimeout(r, 600));
+    statusEl.textContent = msg;
+    progEl.style.width = pct + '%';
+  }
+
+  buildCalendar();
+
+  await new Promise(r => setTimeout(r, 400));
+  document.getElementById('generating-state').style.display = 'none';
+  document.getElementById('calendar-output').classList.remove('hidden');
+}
+
+function buildCalendar() {
+  const selectedList = allPhotos.filter(p => selectedPhotos.has(p.id));
+  const startDate = new Date(2026, 5, 4);
+  calendarData = [];
+
+  const pillarCycle = ['ritual','culture','education','eva','community','ritual','culture','education'];
+  const typeCycle = ['Feed Photo','Feed Photo','Reel','Feed Photo','Story','Feed Photo','Reel'];
+
+  let photoIndex = 0;
+  let postNum = 0;
+  const totalDays = 91;
+
+  for (let d = 0; d < totalDays; d++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + d);
+    const dow = date.getDay();
+
+    const isPostDay = [1,3,5,6].includes(dow) || (dow === 2 && postNum % 3 === 2);
+    if (!isPostDay) continue;
+
+    const pillar = pillarCycle[postNum % pillarCycle.length];
+    const type = typeCycle[postNum % typeCycle.length];
+    const captions = CAPTIONS[pillar];
+    const caption = captions[postNum % captions.length];
+    const photo = selectedList[photoIndex % selectedList.length];
+    photoIndex++;
+
+    const isCannaFest = date >= new Date(2026, 6, 15) && date <= new Date(2026, 6, 20);
+
+    calendarData.push({
+      id: `post-${postNum}`,
+      date: new Date(date),
+      dateStr: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      pillar,
+      pillarLabel: PILLARS.find(p => p.id === pillar).label,
+      type: isCannaFest ? 'Feed Photo' : type,
+      caption: isCannaFest ? `Cannabis Fest is HERE. 🌻 Eva is in DC and we are ready. Come find us — find your light. @NationalCannabisFestival #SunflowerByEva #CannabisInTheLight #FindYourLight` : caption,
+      hashtags: HASHTAGS[pillar],
+      photo: photo,
+      photoName: photo ? photo.name : 'TBD',
+      photoThumb: photo ? photo.thumbnailLink : null,
+      milestone: isCannaFest ? '🌻 Cannabis Fest Week' : null
+    });
+
+    postNum++;
+    if (postNum >= 36) break;
+  }
+
+  renderStats();
+  renderCalGrid();
+  renderCalList();
+}
+
+function renderStats() {
+  const stats = document.getElementById('cal-stats');
+  const total = calendarData.length;
+  const feeds = calendarData.filter(p => p.type === 'Feed Photo').length;
+  const reels = calendarData.filter(p => p.type === 'Reel').length;
+  const stories = calendarData.filter(p => p.type === 'Story').length;
+
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Posts</div></div>
+    <div class="stat-card"><div class="stat-num">${feeds}</div><div class="stat-label">Feed Photos</div></div>
+    <div class="stat-card"><div class="stat-num">${reels}</div><div class="stat-label">Reels</div></div>
+    <div class="stat-card"><div class="stat-num">${stories}</div><div class="stat-label">Stories</div></div>
+    <div class="stat-card"><div class="stat-num">90</div><div class="stat-label">Days Covered</div></div>
+  `;
+}
+
+function renderCalGrid() {
+  const grid = document.getElementById('cal-grid-view');
+
+  const weeks = {};
+  for (const post of calendarData) {
+    const weekStart = new Date(post.date);
+    weekStart.setDate(post.date.getDate() - post.date.getDay());
+    const key = weekStart.toISOString().slice(0,10);
+    if (!weeks[key]) weeks[key] = { label: `Week of ${weekStart.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`, posts: [] };
+    weeks[key].posts.push(post);
+  }
+
+  let html = '<div class="calendar-grid">';
+  html += `<div class="cal-header">Week</div><div class="cal-header">Post 1</div><div class="cal-header">Post 2</div><div class="cal-header">Post 3</div>`;
+
+  for (const [, week] of Object.entries(weeks).slice(0, 13)) {
+    html += `<div class="cal-week-label">${week.label}</div>`;
+    for (let i = 0; i < 3; i++) {
+      const post = week.posts[i];
+      if (post) {
+        const pillarObj = PILLARS.find(p => p.id === post.pillar);
+        const typeClass = post.type === 'Story' ? 'story' : post.type === 'Reel' ? 'reel' : '';
+        html += `<div class="cal-cell">
+          <div class="cal-date">${post.dateStr}${post.milestone ? ` · ${post.milestone}` : ''}</div>
+          <div class="cal-post ${typeClass}" onclick="showPostDetail('${post.id}')">
+            <div class="post-type">${post.type}</div>
+            <div class="post-title">${post.photoName.replace(/\.[^.]+$/,'').substring(0,30)}</div>
+            <div class="post-pillar">${pillarObj.label}</div>
+          </div>
+        </div>`;
+      } else {
+        html += `<div class="cal-cell"></div>`;
+      }
+    }
+  }
+
+  html += '</div>';
+  grid.innerHTML = html;
+}
+
+function renderCalList() {
+  const list = document.getElementById('cal-list-view');
+  let html = '';
+
+  let currentMonth = '';
+  for (const post of calendarData) {
+    const month = post.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (month !== currentMonth) {
+      currentMonth = month;
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--green);font-weight:600;padding:1rem 0 0.5rem;border-top:1px solid var(--border);margin-top:0.5rem;">${month}</div>`;
+    }
+    const pillarObj = PILLARS.find(p => p.id === post.pillar);
+    html += `
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showPostDetail('${post.id}')">
+        ${post.photoThumb ? `<img src="${post.photoThumb}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0;" />` : `<div style="width:52px;height:52px;background:var(--gold-light);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🌻</div>`}
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:0.78rem;font-weight:600;color:var(--gray);">${post.dateStr}</span>
+            <span style="background:var(--green-light);color:var(--green);border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">${post.type}</span>
+            <span style="background:var(--gold-light);color:#7a5800;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">${pillarObj.label}</span>
+            ${post.milestone ? `<span style="background:#FEF9E7;color:var(--amber);border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">${post.milestone}</span>` : ''}
+          </div>
+          <div style="font-size:0.82rem;color:var(--dark);margin-top:4px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${post.caption.substring(0,100)}...</div>
+          <div style="font-size:0.72rem;color:var(--gray);margin-top:2px;">📎 ${post.photoName.replace(/\.[^.]+$/,'')}</div>
+        </div>
+      </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function showPostDetail(id) {
+  const post = calendarData.find(p => p.id === id);
+  if (!post) return;
+  const panel = document.getElementById('post-detail');
+  const pillarObj = PILLARS.find(p => p.id === post.pillar);
+
+  panel.innerHTML = `
+    <div class="post-detail-header">
+      <div>
+        <div class="post-detail-title">${post.dateStr} — ${post.type}</div>
+        <div class="post-meta">
+          <span class="meta-chip">${pillarObj.label}</span>
+          <span class="meta-chip">📎 ${post.photoName.replace(/\.[^.]+$/,'')}</span>
+          ${post.milestone ? `<span class="meta-chip" style="background:var(--amber-light);color:var(--amber);">${post.milestone}</span>` : ''}
+        </div>
+      </div>
+      ${post.photoThumb ? `<img src="${post.photoThumb}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;flex-shrink:0;" />` : ''}
+    </div>
+    <div style="font-size:0.78rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Caption</div>
+    <div class="caption-box">${post.caption}</div>
+    <div class="hashtag-row">${post.hashtags}</div>
+    <div style="margin-top:1rem;display:flex;gap:8px;">
+      <button class="btn btn-sm btn-secondary" onclick="copyCaption('${id}')">📋 Copy Caption</button>
+      <button class="btn btn-sm btn-outline" onclick="document.getElementById('post-detail').classList.remove('visible')">Close</button>
+    </div>
+  `;
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyCaption(id) {
+  const post = calendarData.find(p => p.id === id);
+  if (!post) return;
+  navigator.clipboard.writeText(`${post.caption}\n\n${post.hashtags}`).then(() => alert('Caption copied!'));
+}
+
+function showCalView(view, btn) {
+  document.querySelectorAll('#calendar-output .tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cal-grid-view').classList.toggle('hidden', view !== 'grid');
+  document.getElementById('cal-list-view').classList.toggle('hidden', view !== 'list');
+}
+
+function exportCSV() {
+  const rows = [['Date','Type','Pillar','Photo File','Caption','Hashtags','Milestone']];
+  for (const p of calendarData) {
+    rows.push([p.dateStr, p.type, p.pillarLabel, p.photoName, `"${p.caption.replace(/"/g,'""')}"`, `"${p.hashtags}"`, p.milestone || '']);
+  }
+  const csv = rows.map(r => r.join(',')).join('\n');
+  download('Sunflower_Content_Calendar.csv', csv, 'text/csv');
+}
+
+function exportJSON() {
+  const data = calendarData.map(p => ({ date: p.dateStr, type: p.type, pillar: p.pillarLabel, photo: p.photoName, caption: p.caption, hashtags: p.hashtags, milestone: p.milestone || null }));
+  download('Sunflower_Content_Calendar.json', JSON.stringify(data, null, 2), 'application/json');
+}
+
+function copyAll() {
+  const text = calendarData.map(p => `--- ${p.dateStr} | ${p.type} | ${p.pillarLabel} ---\nPhoto: ${p.photoName}\n${p.caption}\n${p.hashtags}`).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => alert('All captions copied to clipboard!'));
+}
+
+function download(filename, content, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename;
+  a.click();
+}
+
+checkHashToken();
+</script>
+</body>
+</html>
