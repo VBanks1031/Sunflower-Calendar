@@ -686,6 +686,62 @@
     font-weight: 600;
   }
   .milestone-item button { background:none;border:none;cursor:pointer;color:var(--amber);font-size:1rem;padding:0; }
+
+  /* ── SWAP MODAL ──────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: var(--cream); border-radius: var(--radius);
+    width: 100%; max-width: 860px; max-height: 88vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.5rem; background: var(--green); flex-shrink: 0;
+  }
+  .modal-header h3 { font-family: 'Cormorant Garamond',serif; color: var(--gold); font-size: 1.2rem; font-weight:600; }
+  .modal-header button { background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; line-height:1; }
+  .modal-body { flex: 1; overflow-y: auto; padding: 1.2rem 1.5rem; }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap; align-items:center; flex-shrink:0; background:#fff; }
+  .swap-current { display:flex; align-items:center; gap:12px; background: var(--gold-light); border:1px solid var(--gold-mid); border-radius:8px; padding:12px; margin-bottom:1rem; }
+  .swap-current img { width:60px; height:60px; object-fit:cover; border-radius:6px; }
+  .swap-current .info { flex:1; }
+  .swap-current .info .label { font-size:0.7rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:0.06em; }
+  .swap-current .info .name { font-size:0.85rem; font-weight:600; color:var(--dark); margin-top:2px; }
+  .modal-search { display:flex; gap:8px; margin-bottom:1rem; }
+  .modal-search input { flex:1; }
+  .swap-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap:8px; }
+  .swap-photo { position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden; cursor:pointer; border:2px solid transparent; transition:all 0.15s; background:var(--gray-light); }
+  .swap-photo:hover { border-color: var(--gold); transform:scale(1.02); }
+  .swap-photo.active-swap { border-color: var(--gold); }
+  .swap-photo.active-swap::after { content:'✓'; position:absolute; top:5px; right:5px; background:var(--gold); color:#fff; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700; }
+  .swap-photo img { width:100%; height:100%; object-fit:cover; }
+  .swap-photo .swap-label { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.65)); color:#fff; font-size:0.55rem; padding:10px 4px 4px; line-height:1.2; word-break:break-all; }
+  .upload-zone { border:2px dashed var(--gold); border-radius:10px; padding:2rem; text-align:center; cursor:pointer; transition:background 0.15s; margin-bottom:1rem; }
+  .upload-zone:hover { background: var(--gold-light); }
+  .upload-zone .icon { font-size:2rem; margin-bottom:8px; }
+  .upload-zone p { font-size:0.83rem; color:var(--gray); }
+  .upload-zone input[type=file] { display:none; }
+
+  /* ── TOAST ───────────────────────────────────────────────────── */
+  .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:var(--green); color:#fff; padding:10px 22px; border-radius:20px; font-size:0.83rem; font-weight:600; z-index:2000; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+  .toast.show { opacity:1; }
+
+  /* ── SAVE INDICATOR ──────────────────────────────────────────── */
+  .save-indicator { font-size:0.72rem; color:var(--sage); display:flex; align-items:center; gap:5px; }
+
+  /* ── LATER EXPORT BANNER ─────────────────────────────────────── */
+  .platform-banner { display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-top:10px; flex-wrap:wrap; }
+  .platform-logo { font-size:1.4rem; }
+  .platform-info { flex:1; }
+  .platform-info strong { font-size:0.85rem; color:var(--dark); }
+  .platform-info p { font-size:0.75rem; color:var(--gray); margin-top:2px; line-height:1.4; }
+
 </style>
 </head>
 <body>
@@ -992,15 +1048,87 @@
         <div id="cal-list-view" class="hidden"></div>
         <div class="post-detail-panel" id="post-detail"></div>
         <div class="export-row">
-          <button class="btn btn-primary" onclick="exportCSV()">⬇ Export CSV</button>
-          <button class="btn btn-secondary" onclick="exportJSON()">⬇ Export JSON</button>
+          <button class="btn btn-primary" onclick="exportCSV()">⬇ Export for Later</button>
+          <button class="btn btn-secondary" onclick="exportFullCSV()">⬇ Full CSV</button>
+          <button class="btn btn-secondary" onclick="exportJSON()">⬇ JSON</button>
           <button class="btn btn-outline" onclick="copyAll()">📋 Copy All Captions</button>
+          <button class="btn btn-outline btn-sm" onclick="clearStorage()" style="margin-left:auto;color:var(--gray);">🗑 Clear Saved</button>
+          <span class="save-indicator" id="save-indicator"></span>
+        </div>
+
+        <!-- Later integration guide -->
+        <div style="margin-top:1.5rem;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">📅 Schedule with Later</div>
+          <div class="platform-banner">
+            <div class="platform-logo">📲</div>
+            <div class="platform-info">
+              <strong>Later — Recommended for Sunflower</strong>
+              <p>Export the "Later CSV" above → go to later.com → Posts → Import → upload the file. Your dates, captions, and hashtags pre-populate. Connect your Google Drive in Later's media library to pull photos directly. Then review and publish.</p>
+            </div>
+            <a href="https://later.com" target="_blank" class="btn btn-sm btn-primary">Open Later →</a>
+          </div>
+          <div class="platform-banner">
+            <div class="platform-logo">📊</div>
+            <div class="platform-info">
+              <strong>Meta Business Suite — Free Option</strong>
+              <p>Free direct scheduling to Instagram. No CSV import — you'd copy captions manually. Best if you want zero cost and already use Meta tools.</p>
+            </div>
+            <a href="https://business.facebook.com" target="_blank" class="btn btn-sm btn-outline">Open Meta Suite →</a>
+          </div>
+          <div class="platform-banner">
+            <div class="platform-logo">🌿</div>
+            <div class="platform-info">
+              <strong>Planoly — Visual Alternative</strong>
+              <p>Strong visual grid planner, great for aesthetic brands like Sunflower. Accepts CSV import similar to Later. Good if you want to see how your feed will look.</p>
+            </div>
+            <a href="https://www.planoly.com" target="_blank" class="btn btn-sm btn-outline">Open Planoly →</a>
+          </div>
         </div>
       </div>
     </div>
 
   </div>
 </div>
+
+<!-- SWAP MODAL -->
+<div class="modal-overlay hidden" id="swap-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>🌻 Swap Photo</h3>
+      <button onclick="closeSwapModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="swap-current" id="swap-current-photo">
+        <div style="width:60px;height:60px;background:var(--gold-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🌻</div>
+        <div class="info"><div class="label">Currently assigned</div><div class="name" id="swap-current-name">—</div></div>
+      </div>
+
+      <!-- Upload new photo -->
+      <div class="upload-zone" onclick="document.getElementById('upload-input').click()">
+        <div class="icon">📤</div>
+        <p><strong>Upload a new photo</strong><br>Click to browse from your device</p>
+        <input type="file" id="upload-input" accept="image/*,video/*" onchange="handleUpload(event)" />
+      </div>
+
+      <!-- Search Drive gallery -->
+      <div class="modal-search">
+        <input type="text" id="swap-search" placeholder="Search Drive gallery by filename..." oninput="filterSwapGrid()" />
+        <button class="btn btn-sm btn-secondary" onclick="filterSwapGrid()">Search</button>
+      </div>
+
+      <div style="font-size:0.75rem;color:var(--gray);margin-bottom:10px;" id="swap-count"></div>
+      <div class="swap-grid" id="swap-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="swap-confirm-btn" onclick="confirmSwap()" disabled>✓ Confirm Swap</button>
+      <button class="btn btn-outline" onclick="closeSwapModal()">Cancel</button>
+      <span style="margin-left:auto;font-size:0.75rem;color:var(--gray);" id="swap-selected-name"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script>
 const EXCLUDED = new Set([
@@ -1720,6 +1848,7 @@ function buildCalendar() {
   renderStats();
   renderCalGrid();
   renderCalList();
+  saveToStorage();
 }
 
 function renderStats() {
@@ -1808,6 +1937,175 @@ function renderCalList() {
   list.innerHTML = html;
 }
 
+// ── TOAST ────────────────────────────────────────────────────────────
+function toast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── LOCAL STORAGE ─────────────────────────────────────────────────────
+function saveToStorage() {
+  try {
+    const data = {
+      calendarData: calendarData.map(p => ({
+        ...p,
+        date: p.date.toISOString()
+      })),
+      selectedPhotos: [...selectedPhotos],
+      customMilestones,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('sfx_calendar', JSON.stringify(data));
+    updateSaveIndicator();
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem('sfx_calendar');
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (data.calendarData && data.calendarData.length > 0) {
+      calendarData = data.calendarData.map(p => ({ ...p, date: new Date(p.date) }));
+      if (data.selectedPhotos) data.selectedPhotos.forEach(id => selectedPhotos.add(id));
+      if (data.customMilestones) customMilestones = data.customMilestones;
+      return true;
+    }
+  } catch(e) { console.warn('Load failed:', e); }
+  return false;
+}
+
+function updateSaveIndicator() {
+  const el = document.getElementById('save-indicator');
+  if (el) {
+    const now = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    el.textContent = '✓ Saved at ' + now;
+  }
+}
+
+function clearStorage() {
+  if (confirm('Clear saved calendar? This cannot be undone.')) {
+    localStorage.removeItem('sfx_calendar');
+    calendarData = [];
+    toast('Calendar cleared');
+  }
+}
+
+// ── SWAP MODAL ────────────────────────────────────────────────────────
+let swapPostId = null;
+let swapSelectedPhoto = null;
+
+function openSwapModal(postId) {
+  swapPostId = postId;
+  swapSelectedPhoto = null;
+  const post = calendarData.find(p => p.id === postId);
+  if (!post) return;
+
+  // Show current photo
+  const currentEl = document.getElementById('swap-current-photo');
+  const nameEl = document.getElementById('swap-current-name');
+  nameEl.textContent = post.photoName || 'None assigned';
+  if (post.photoThumb) {
+    currentEl.innerHTML = `<img src="${post.photoThumb}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;" /><div class="info"><div class="label">Currently assigned</div><div class="name">${post.photoName.replace(/\.[^.]+$/,'')}</div></div>`;
+  }
+
+  document.getElementById('swap-search').value = '';
+  document.getElementById('swap-confirm-btn').disabled = true;
+  document.getElementById('swap-selected-name').textContent = '';
+  renderSwapGrid(allPhotos);
+  document.getElementById('swap-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSwapModal() {
+  document.getElementById('swap-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  swapPostId = null;
+  swapSelectedPhoto = null;
+}
+
+function renderSwapGrid(photos) {
+  const grid = document.getElementById('swap-grid');
+  const countEl = document.getElementById('swap-count');
+  const eligible = photos.filter(p => !isExcluded(p.name));
+  countEl.textContent = `${eligible.length} photos available`;
+  grid.innerHTML = '';
+  for (const photo of eligible) {
+    const div = document.createElement('div');
+    div.className = 'swap-photo';
+    if (swapSelectedPhoto && swapSelectedPhoto.id === photo.id) div.classList.add('active-swap');
+    const thumb = photo.thumbnailLink
+      ? `<img src="${photo.thumbnailLink.replace('=s220','=s400')}" loading="lazy" />`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${photo.mimeType && photo.mimeType.includes('video') ? '🎬' : '🖼'}</div>`;
+    div.innerHTML = `${thumb}<div class="swap-label">${photo.name.replace(/\.[^.]+$/,'').substring(0,25)}</div>`;
+    div.onclick = () => selectSwapPhoto(photo, div);
+    grid.appendChild(div);
+  }
+}
+
+function selectSwapPhoto(photo, el) {
+  document.querySelectorAll('.swap-photo').forEach(p => p.classList.remove('active-swap'));
+  el.classList.add('active-swap');
+  swapSelectedPhoto = photo;
+  document.getElementById('swap-confirm-btn').disabled = false;
+  document.getElementById('swap-selected-name').textContent = '→ ' + photo.name.replace(/\.[^.]+$/,'');
+}
+
+function filterSwapGrid() {
+  const q = document.getElementById('swap-search').value.toLowerCase();
+  const filtered = q ? allPhotos.filter(p => p.name.toLowerCase().includes(q)) : allPhotos;
+  renderSwapGrid(filtered);
+}
+
+function confirmSwap() {
+  if (!swapPostId || !swapSelectedPhoto) return;
+  const post = calendarData.find(p => p.id === swapPostId);
+  if (!post) return;
+  post.photo = swapSelectedPhoto;
+  post.photoName = swapSelectedPhoto.name;
+  post.photoThumb = swapSelectedPhoto.thumbnailLink || null;
+  closeSwapModal();
+  renderCalGrid();
+  renderCalList();
+  showPostDetail(swapPostId);
+  saveToStorage();
+  toast('✓ Photo swapped successfully');
+}
+
+function handleUpload(event) {
+  const file = event.target.files[0];
+  if (!file || !swapPostId) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const uploadedPhoto = {
+      id: 'upload-' + Date.now(),
+      name: file.name,
+      mimeType: file.type,
+      thumbnailLink: e.target.result,
+      isLocal: true
+    };
+    // Add to allPhotos so it's available for future swaps
+    allPhotos.unshift(uploadedPhoto);
+    // Immediately assign to post
+    const post = calendarData.find(p => p.id === swapPostId);
+    if (post) {
+      post.photo = uploadedPhoto;
+      post.photoName = file.name;
+      post.photoThumb = e.target.result;
+    }
+    closeSwapModal();
+    renderCalGrid();
+    renderCalList();
+    showPostDetail(swapPostId);
+    saveToStorage();
+    toast('✓ Photo uploaded and assigned');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── POST DETAIL ───────────────────────────────────────────────────────
 function showPostDetail(id) {
   const post = calendarData.find(p => p.id === id);
   if (!post) return;
@@ -1816,7 +2114,7 @@ function showPostDetail(id) {
 
   panel.innerHTML = `
     <div class="post-detail-header">
-      <div>
+      <div style="flex:1;">
         <div class="post-detail-title">${post.dateStr} — ${post.type}</div>
         <div class="post-meta">
           <span class="meta-chip">${pillarObj.label}</span>
@@ -1824,24 +2122,34 @@ function showPostDetail(id) {
           ${post.milestone ? `<span class="meta-chip" style="background:var(--amber-light);color:var(--amber);">${post.milestone}</span>` : ''}
         </div>
       </div>
-      ${post.photoThumb ? `<img src="${post.photoThumb}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;flex-shrink:0;" />` : ''}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+        ${post.photoThumb ? `<img src="${post.photoThumb}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="openSwapModal('${id}')" title="Click to swap photo" />` : `<div style="width:70px;height:70px;background:var(--gold-light);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;" onclick="openSwapModal('${id}')">🌻</div>`}
+        <button class="btn btn-sm btn-outline" onclick="openSwapModal('${id}')">🔄 Swap Photo</button>
+      </div>
     </div>
     <div style="font-size:0.78rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Caption</div>
-    <div class="caption-box">${post.caption}</div>
+    <div class="caption-box" id="caption-${id}" contenteditable="true" onblur="saveCaption('${id}', this.textContent)">${post.caption}</div>
     <div class="hashtag-row">${post.hashtags}</div>
-    <div style="margin-top:1rem;display:flex;gap:8px;">
+    <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-sm btn-secondary" onclick="copyCaption('${id}')">📋 Copy Caption</button>
+      <button class="btn btn-sm btn-outline" onclick="openSwapModal('${id}')">🔄 Swap Photo</button>
       <button class="btn btn-sm btn-outline" onclick="document.getElementById('post-detail').classList.remove('visible')">Close</button>
     </div>
+    <div style="font-size:0.72rem;color:var(--gray);margin-top:8px;">💡 Tip: Click the caption text above to edit it directly</div>
   `;
   panel.classList.add('visible');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function saveCaption(id, text) {
+  const post = calendarData.find(p => p.id === id);
+  if (post) { post.caption = text.trim(); saveToStorage(); toast('Caption saved'); }
+}
+
 function copyCaption(id) {
   const post = calendarData.find(p => p.id === id);
   if (!post) return;
-  navigator.clipboard.writeText(`${post.caption}\n\n${post.hashtags}`).then(() => alert('Caption copied!'));
+  navigator.clipboard.writeText(`${post.caption}\n\n${post.hashtags}`).then(() => toast('📋 Caption copied!'));
 }
 
 function showCalView(view, btn) {
@@ -1851,23 +2159,41 @@ function showCalView(view, btn) {
   document.getElementById('cal-list-view').classList.toggle('hidden', view !== 'list');
 }
 
+// ── EXPORTS ───────────────────────────────────────────────────────────
 function exportCSV() {
-  const rows = [['Date','Type','Pillar','Photo File','Caption','Hashtags','Milestone']];
+  // Later-compatible CSV format
+  const rows = [['Name','Caption','Scheduled Time','Media URL','Labels']];
   for (const p of calendarData) {
-    rows.push([p.dateStr, p.type, p.pillarLabel, p.photoName, `"${p.caption.replace(/"/g,'""')}"`, `"${p.hashtags}"`, p.milestone || '']);
+    const scheduledTime = p.date.toISOString().replace('T',' ').slice(0,16);
+    const caption = `${p.caption}\n\n${p.hashtags}`.replace(/"/g,'""');
+    const label = p.pillarLabel;
+    rows.push([`"${p.photoName}"`, `"${caption}"`, scheduledTime, `"${p.photoThumb || ''}"`, `"${label}"`]);
   }
   const csv = rows.map(r => r.join(',')).join('\n');
-  download('Sunflower_Content_Calendar.csv', csv, 'text/csv');
+  download('Sunflower_Later_Import.csv', csv, 'text/csv');
+  toast('📥 Later-compatible CSV exported!');
+}
+
+function exportFullCSV() {
+  const rows = [['Date','Day','Post Type','Content Pillar','Photo File','Caption','Hashtags','Milestone']];
+  for (const p of calendarData) {
+    const day = p.date.toLocaleDateString('en-US', { weekday: 'long' });
+    rows.push([p.dateStr, day, p.type, p.pillarLabel, p.photoName, `"${p.caption.replace(/"/g,'""')}"`, `"${p.hashtags}"`, p.milestone || '']);
+  }
+  const csv = rows.map(r => r.join(',')).join('\n');
+  download('Sunflower_Content_Calendar_Full.csv', csv, 'text/csv');
+  toast('📥 Full calendar CSV exported!');
 }
 
 function exportJSON() {
-  const data = calendarData.map(p => ({ date: p.dateStr, type: p.type, pillar: p.pillarLabel, photo: p.photoName, caption: p.caption, hashtags: p.hashtags, milestone: p.milestone || null }));
+  const data = calendarData.map(p => ({ date: p.dateStr, type: p.type, pillar: p.pillarLabel, photo: p.photoName, photoThumb: p.photoThumb || null, caption: p.caption, hashtags: p.hashtags, milestone: p.milestone || null }));
   download('Sunflower_Content_Calendar.json', JSON.stringify(data, null, 2), 'application/json');
+  toast('📥 JSON exported!');
 }
 
 function copyAll() {
   const text = calendarData.map(p => `--- ${p.dateStr} | ${p.type} | ${p.pillarLabel} ---\nPhoto: ${p.photoName}\n${p.caption}\n${p.hashtags}`).join('\n\n');
-  navigator.clipboard.writeText(text).then(() => alert('All captions copied to clipboard!'));
+  navigator.clipboard.writeText(text).then(() => toast('📋 All captions copied!'));
 }
 
 function download(filename, content, type) {
@@ -1878,6 +2204,21 @@ function download(filename, content, type) {
 }
 
 checkHashToken();
+
+// Try to restore saved session
+window.addEventListener('load', () => {
+  if (loadFromStorage() && calendarData.length > 0) {
+    document.getElementById('calendar-section').style.display = 'block';
+    document.getElementById('generating-state').style.display = 'none';
+    document.getElementById('calendar-output').classList.remove('hidden');
+    renderStats();
+    renderCalGrid();
+    renderCalList();
+    updateSaveIndicator();
+    // Show a restore notice
+    setTimeout(() => toast('✓ Calendar restored from last session'), 500);
+  }
+});
 </script>
 </body>
 </html>
