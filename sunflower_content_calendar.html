@@ -657,6 +657,35 @@
 
   .arrow { color: var(--border); margin: 0 6px; font-size: 0.8rem; }
 
+
+  .feedback-chip {
+    background: var(--gray-light);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Nunito Sans', sans-serif;
+    color: var(--dark);
+    transition: all 0.15s;
+  }
+  .feedback-chip:hover { border-color: var(--gold); color: var(--green); }
+  .feedback-chip.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+  .milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--amber-light);
+    border: 1px solid #FFDCA8;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    color: var(--amber);
+    font-weight: 600;
+  }
+  .milestone-item button { background:none;border:none;cursor:pointer;color:var(--amber);font-size:1rem;padding:0; }
 </style>
 </head>
 <body>
@@ -785,34 +814,183 @@
       </div>
     </div>
 
+    <!-- STEP 3.5: CALENDAR SETTINGS -->
+    <div class="section" id="settings-section" style="display:none;">
+      <div class="section-title">
+        <span class="step-num">3.5</span>
+        Calendar Settings
+      </div>
+      <div class="section-desc">Customize your calendar before generating. These settings control the date range, posting frequency, and content mix.</div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1.5rem;">
+
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Start Date</label>
+          <input type="date" id="cal-start-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;" />
+        </div>
+
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Duration</label>
+          <select id="cal-duration" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90" selected>90 days</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Posts Per Week</label>
+          <select id="cal-freq" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="2">2x per week</option>
+            <option value="3" selected>3x per week</option>
+            <option value="4">4x per week</option>
+            <option value="5">5x per week</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Post Type Mix</label>
+          <select id="cal-mix" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="balanced" selected>Balanced (Feed + Reels + Stories)</option>
+            <option value="feed-heavy">Feed Heavy (mostly photos)</option>
+            <option value="reels-heavy">Reels Heavy (video forward)</option>
+            <option value="feed-only">Feed Only (no Reels/Stories)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div style="margin-bottom:1.5rem;">
+        <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:10px;">Pillar Priority</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;" id="pillar-toggles">
+          <label class="pillar-toggle" data-pillar="ritual"><input type="checkbox" checked /> Ritual & Routine</label>
+          <label class="pillar-toggle" data-pillar="education"><input type="checkbox" checked /> Education & Science</label>
+          <label class="pillar-toggle" data-pillar="eva"><input type="checkbox" checked /> Eva's World</label>
+          <label class="pillar-toggle" data-pillar="community"><input type="checkbox" checked /> Community & Impact</label>
+          <label class="pillar-toggle" data-pillar="culture"><input type="checkbox" checked /> Culture & Beauty</label>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Key Milestone Dates (optional)</label>
+        <div id="milestone-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+        <div class="input-row">
+          <input type="date" id="milestone-date" style="padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;" />
+          <input type="text" id="milestone-label" placeholder="Label (e.g. Cannabis Fest)" style="flex:1;" />
+          <button class="btn btn-sm btn-secondary" onclick="addMilestone()">+ Add</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STEP 3.5: CALENDAR SETTINGS -->
+    <div class="section" id="settings-section" style="display:none;">
+      <div class="section-title">
+        <span class="step-num">3.5</span>
+        Calendar Settings
+      </div>
+      <div class="section-desc">Customize before generating. Control the date range, posting frequency, and content mix.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1.5rem;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Start Date</label>
+          <input type="date" id="cal-start-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;" />
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Duration</label>
+          <select id="cal-duration" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90" selected>90 days</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Posts Per Week</label>
+          <select id="cal-freq" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="2">2x per week</option>
+            <option value="3" selected>3x per week</option>
+            <option value="4">4x per week</option>
+            <option value="5">5x per week</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Post Type Mix</label>
+          <select id="cal-mix" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="balanced" selected>Balanced (Feed + Reels + Stories)</option>
+            <option value="feed-heavy">Feed Heavy (mostly photos)</option>
+            <option value="reels-heavy">Reels Heavy (video forward)</option>
+            <option value="feed-only">Feed Only (no Reels/Stories)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:10px;">Pillar Priority (uncheck to exclude)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;background:var(--gold-light);padding:6px 12px;border-radius:20px;border:1px solid var(--gold-mid);color:#7a5800;font-weight:600;"><input type="checkbox" id="pillar-ritual" checked /> Ritual & Routine</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;background:var(--green-light);padding:6px 12px;border-radius:20px;border:1px solid var(--sage);color:var(--green);font-weight:600;"><input type="checkbox" id="pillar-education" checked /> Education & Science</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;background:#FFF0E8;padding:6px 12px;border-radius:20px;border:1px solid #E8C4A8;color:#7a3a1a;font-weight:600;"><input type="checkbox" id="pillar-eva" checked /> Eva's World</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;background:#EEF6F1;padding:6px 12px;border-radius:20px;border:1px solid #A8C8B4;color:#2a5a3a;font-weight:600;"><input type="checkbox" id="pillar-community" checked /> Community & Impact</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;background:#F5EEF8;padding:6px 12px;border-radius:20px;border:1px solid #C8A8D8;color:#5a2a7a;font-weight:600;"><input type="checkbox" id="pillar-culture" checked /> Culture & Beauty</label>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:8px;">Milestone Dates (optional)</label>
+        <div id="milestone-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <div class="input-row">
+          <input type="date" id="milestone-date" style="padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;" />
+          <input type="text" id="milestone-label" placeholder="Label (e.g. Cannabis Fest)" style="flex:1;" />
+          <button class="btn btn-sm btn-secondary" onclick="addMilestone()">+ Add</button>
+        </div>
+      </div>
+    </div>
+
     <!-- STEP 4: CALENDAR -->
     <div class="section" id="calendar-section" style="display:none;">
       <div class="section-title">
         <span class="step-num">4</span>
-        90-Day Content Calendar
+        Content Calendar
       </div>
-
       <div id="generating-state" class="loading-state">
         <div class="spinner"></div>
-        <div id="gen-status">Analyzing photos and building your calendar...</div>
+        <div id="gen-status">Building your calendar...</div>
         <div class="progress-bar" style="max-width:300px;margin:10px auto 0;">
           <div class="progress-fill" id="gen-progress" style="width:10%"></div>
         </div>
       </div>
-
       <div id="calendar-output" class="hidden">
         <div class="stats-row" id="cal-stats"></div>
-
+        <div style="background:var(--gold-light);border:1px solid var(--gold-mid);border-radius:10px;padding:14px 16px;margin-bottom:1.5rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:0.82rem;color:#7a5800;font-weight:600;">🌻 Refine your calendar:</span>
+          <button class="btn btn-sm btn-secondary" onclick="showFeedbackPanel()">Give Feedback & Regenerate</button>
+          <button class="btn btn-sm btn-outline" onclick="showSettingsAndRegen()">Change Settings</button>
+          <button class="btn btn-sm btn-outline" onclick="shufflePhotos()">Shuffle Photo Assignments</button>
+        </div>
+        <div id="feedback-panel" style="display:none;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem;">
+          <div style="font-size:0.9rem;font-weight:700;color:var(--green);margin-bottom:12px;">What needs to change?</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="too-repetitive">Too repetitive</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="same-photo-type">Same photo type repeating</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="more-reels">More Reels</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="fewer-reels">Fewer Reels</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="more-eva">More Eva's World posts</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="more-education">More Education posts</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="more-culture">More Culture & Beauty</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="spread-pillars">Better pillar variety</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="fewer-posts">Fewer posts per week</button>
+            <button class="feedback-chip" onclick="toggleChip(this)" data-feedback="more-posts">More posts per week</button>
+          </div>
+          <textarea id="feedback-text" placeholder="Any other notes? (e.g. 'don't repeat the same photo two weeks in a row')" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Nunito Sans',sans-serif;font-size:0.83rem;resize:vertical;min-height:70px;background:var(--cream);"></textarea>
+          <div style="display:flex;gap:10px;margin-top:12px;">
+            <button class="btn btn-primary" onclick="applyFeedback()">🌻 Regenerate with Feedback</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('feedback-panel').style.display='none'">Cancel</button>
+          </div>
+        </div>
         <div class="tabs">
           <button class="tab active" onclick="showCalView('grid', this)">Calendar View</button>
           <button class="tab" onclick="showCalView('list', this)">List View</button>
         </div>
-
         <div id="cal-grid-view"></div>
         <div id="cal-list-view" class="hidden"></div>
-
         <div class="post-detail-panel" id="post-detail"></div>
-
         <div class="export-row">
           <button class="btn btn-primary" onclick="exportCSV()">⬇ Export CSV</button>
           <button class="btn btn-secondary" onclick="exportJSON()">⬇ Export JSON</button>
@@ -1298,8 +1476,123 @@ const HASHTAGS = {
   culture: '#SunflowerByEva #GoldenHour #BotanicalAesthetics #CannabisLifestyle #FindYourLight #WomenWhoBloom #IntentionalLiving 🌻'
 };
 
+let customMilestones = [
+  { date: '2026-07-18', label: '🌻 Cannabis Fest' }
+];
+
+function addMilestone() {
+  const date = document.getElementById('milestone-date').value;
+  const label = document.getElementById('milestone-label').value.trim();
+  if (!date || !label) return;
+  customMilestones.push({ date, label });
+  document.getElementById('milestone-date').value = '';
+  document.getElementById('milestone-label').value = '';
+  renderMilestones();
+}
+
+function removeMilestone(idx) {
+  customMilestones.splice(idx, 1);
+  renderMilestones();
+}
+
+function renderMilestones() {
+  const list = document.getElementById('milestone-list');
+  if (!list) return;
+  list.innerHTML = customMilestones.map((m, i) =>
+    `<div class="milestone-item">📅 ${m.date} — ${m.label} <button onclick="removeMilestone(${i})">×</button></div>`
+  ).join('');
+}
+
+function toggleChip(btn) {
+  btn.classList.toggle('active');
+}
+
+function showFeedbackPanel() {
+  const panel = document.getElementById('feedback-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function showSettingsAndRegen() {
+  document.getElementById('settings-section').style.display = 'block';
+  document.getElementById('settings-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function shufflePhotos() {
+  const selectedList = allPhotos.filter(p => selectedPhotos.has(p.id));
+  // Fisher-Yates shuffle
+  for (let i = selectedList.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [selectedList[i], selectedList[j]] = [selectedList[j], selectedList[i]];
+  }
+  let pi = 0;
+  for (const post of calendarData) {
+    post.photo = selectedList[pi % selectedList.length];
+    post.photoName = post.photo ? post.photo.name : 'TBD';
+    post.photoThumb = post.photo ? post.photo.thumbnailLink : null;
+    pi++;
+  }
+  renderCalGrid();
+  renderCalList();
+  const bar = document.querySelector('#calendar-output > div:first-child span');
+}
+
+function applyFeedback() {
+  const activeChips = [...document.querySelectorAll('.feedback-chip.active')].map(c => c.dataset.feedback);
+  const notes = document.getElementById('feedback-text').value;
+
+  // Apply feedback adjustments
+  if (activeChips.includes('more-reels')) {
+    document.getElementById('cal-mix').value = 'reels-heavy';
+  }
+  if (activeChips.includes('fewer-reels')) {
+    document.getElementById('cal-mix').value = 'feed-heavy';
+  }
+  if (activeChips.includes('fewer-posts')) {
+    document.getElementById('cal-freq').value = '2';
+  }
+  if (activeChips.includes('more-posts')) {
+    document.getElementById('cal-freq').value = '4';
+  }
+  if (activeChips.includes('same-photo-type') || activeChips.includes('too-repetitive')) {
+    shufflePhotos();
+  }
+  if (activeChips.includes('more-eva')) {
+    document.getElementById('pillar-ritual').checked = true;
+    document.getElementById('pillar-eva').checked = true;
+    document.getElementById('pillar-education').checked = false;
+  }
+  if (activeChips.includes('more-education')) {
+    document.getElementById('pillar-education').checked = true;
+  }
+  if (activeChips.includes('more-culture')) {
+    document.getElementById('pillar-culture').checked = true;
+  }
+  if (activeChips.includes('spread-pillars')) {
+    ['ritual','education','eva','community','culture'].forEach(p =>
+      document.getElementById('pillar-' + p).checked = true
+    );
+  }
+
+  document.getElementById('feedback-panel').style.display = 'none';
+  document.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('feedback-text').value = '';
+  analyzeSelected();
+}
+
 async function analyzeSelected() {
   if (selectedPhotos.size === 0) return;
+
+  // Show settings section first if not yet seen
+  document.getElementById('settings-section').style.display = 'block';
+
+  // Set today as default start date if not set
+  const startInput = document.getElementById('cal-start-date');
+  if (!startInput.value) {
+    const today = new Date();
+    startInput.value = today.toISOString().slice(0, 10);
+  }
+
+  renderMilestones();
 
   document.getElementById('calendar-section').style.display = 'block';
   document.getElementById('generating-state').style.display = 'block';
@@ -1333,32 +1626,76 @@ async function analyzeSelected() {
 
 function buildCalendar() {
   const selectedList = allPhotos.filter(p => selectedPhotos.has(p.id));
-  const startDate = new Date(2026, 5, 4);
+
+  // Read settings
+  const startInput = document.getElementById('cal-start-date').value;
+  const startDate = startInput ? new Date(startInput + 'T12:00:00') : new Date();
+  const totalDays = parseInt(document.getElementById('cal-duration').value) || 90;
+  const freq = parseInt(document.getElementById('cal-freq').value) || 3;
+  const mix = document.getElementById('cal-mix').value || 'balanced';
+
+  // Active pillars
+  const allPillars = ['ritual','education','eva','community','culture'];
+  const activePillars = allPillars.filter(p => {
+    const el = document.getElementById('pillar-' + p);
+    return el ? el.checked : true;
+  });
+  if (activePillars.length === 0) activePillars.push(...allPillars);
+
+  // Build pillar cycle with no two same in a row
+  const pillarCycle = [];
+  for (let i = 0; i < 20; i++) {
+    const last = pillarCycle[pillarCycle.length - 1];
+    const options = activePillars.filter(p => p !== last);
+    pillarCycle.push(options[i % options.length]);
+  }
+
+  // Type cycle based on mix setting
+  let typeCycle;
+  if (mix === 'feed-heavy') typeCycle = ['Feed Photo','Feed Photo','Feed Photo','Feed Photo','Story'];
+  else if (mix === 'reels-heavy') typeCycle = ['Reel','Feed Photo','Reel','Feed Photo','Story'];
+  else if (mix === 'feed-only') typeCycle = ['Feed Photo','Feed Photo','Feed Photo'];
+  else typeCycle = ['Feed Photo','Feed Photo','Reel','Feed Photo','Story','Feed Photo','Reel'];
+
+  // Pick posting days based on frequency
+  let postDays;
+  if (freq <= 2) postDays = [1, 4];
+  else if (freq === 3) postDays = [1, 3, 6];
+  else if (freq === 4) postDays = [1, 3, 5, 6];
+  else postDays = [1, 2, 4, 5, 6];
+
   calendarData = [];
-
-  const pillarCycle = ['ritual','culture','education','eva','community','ritual','culture','education'];
-  const typeCycle = ['Feed Photo','Feed Photo','Reel','Feed Photo','Story','Feed Photo','Reel'];
-
   let photoIndex = 0;
   let postNum = 0;
-  const totalDays = 91;
+
+  // Shuffle photos to avoid repetition
+  const shuffled = [...selectedList];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
 
   for (let d = 0; d < totalDays; d++) {
     const date = new Date(startDate);
     date.setDate(startDate.getDate() + d);
     const dow = date.getDay();
 
-    const isPostDay = [1,3,5,6].includes(dow) || (dow === 2 && postNum % 3 === 2);
-    if (!isPostDay) continue;
+    if (!postDays.includes(dow)) continue;
 
     const pillar = pillarCycle[postNum % pillarCycle.length];
     const type = typeCycle[postNum % typeCycle.length];
     const captions = CAPTIONS[pillar];
     const caption = captions[postNum % captions.length];
-    const photo = selectedList[photoIndex % selectedList.length];
+    const photo = shuffled[photoIndex % shuffled.length];
     photoIndex++;
 
-    const isCannaFest = date >= new Date(2026, 6, 15) && date <= new Date(2026, 6, 20);
+    // Check for milestone
+    const dateKey = date.toISOString().slice(0,10);
+    const milestone = customMilestones.find(m => {
+      const mDate = new Date(m.date + 'T12:00:00');
+      const postDate = new Date(date);
+      return Math.abs(mDate - postDate) < 3 * 24 * 60 * 60 * 1000;
+    });
 
     calendarData.push({
       id: `post-${postNum}`,
@@ -1366,17 +1703,18 @@ function buildCalendar() {
       dateStr: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       pillar,
       pillarLabel: PILLARS.find(p => p.id === pillar).label,
-      type: isCannaFest ? 'Feed Photo' : type,
-      caption: isCannaFest ? `Cannabis Fest is HERE. 🌻 Eva is in DC and we are ready. Come find us — find your light. @NationalCannabisFestival #SunflowerByEva #CannabisInTheLight #FindYourLight` : caption,
+      type: milestone ? 'Feed Photo' : type,
+      caption: milestone
+        ? `${milestone.label} 🌻 This moment is everything. Eva is here and so are we — find your light. #SunflowerByEva #FindYourLight #CannabisInTheLight`
+        : caption,
       hashtags: HASHTAGS[pillar],
       photo: photo,
       photoName: photo ? photo.name : 'TBD',
       photoThumb: photo ? photo.thumbnailLink : null,
-      milestone: isCannaFest ? '🌻 Cannabis Fest Week' : null
+      milestone: milestone ? milestone.label : null
     });
 
     postNum++;
-    if (postNum >= 36) break;
   }
 
   renderStats();
