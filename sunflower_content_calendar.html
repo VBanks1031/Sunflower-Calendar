@@ -908,26 +908,71 @@ async function findFolder() {
   res.innerHTML = '<div class="loading-state" style="padding:1rem;"><div class="spinner"></div><div>Searching Drive...</div></div>';
 
   try {
-    const q = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-    const resp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType)`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    const data = await resp.json();
+    // Search for both real folders AND shortcuts pointing to folders
+    const queries = [
+      `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      `name='${name}' and mimeType='application/vnd.google-apps.shortcut' and trashed=false`
+    ];
 
-    if (!data.files || data.files.length === 0) {
-      res.innerHTML = `<div class="alert alert-error">Folder "${name}" not found. Make sure it's in your Drive (not just a shortcut — try "Add to My Drive" first).</div>`;
+    let foundFolder = null;
+
+    for (const q of queries) {
+      const resp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,shortcutDetails)&includeItemsFromAllDrives=true&supportsAllDrives=true`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+
+      if (data.files && data.files.length > 0) {
+        const file = data.files[0];
+        // If it's a shortcut, resolve to the real folder ID
+        if (file.mimeType === 'application/vnd.google-apps.shortcut' && file.shortcutDetails) {
+          foundFolder = { id: file.shortcutDetails.targetId, name: file.name, isShortcut: true };
+        } else {
+          foundFolder = { id: file.id, name: file.name, isShortcut: false };
+        }
+        break;
+      }
+    }
+
+    if (!foundFolder) {
+      // Last resort: search shared drives too
+      const resp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`name='${name}' and trashed=false`)}&fields=files(id,name,mimeType,shortcutDetails)&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=allDrives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.files && data.files.length > 0) {
+        const file = data.files[0];
+        if (file.shortcutDetails) {
+          foundFolder = { id: file.shortcutDetails.targetId, name: file.name, isShortcut: true };
+        } else {
+          foundFolder = { id: file.id, name: file.name, isShortcut: false };
+        }
+      }
+    }
+
+    if (!foundFolder) {
+      res.innerHTML = `<div class="alert alert-error">
+        Folder "${name}" not found. Please try:<br><br>
+        1. Make sure the exact folder name matches (case sensitive)<br>
+        2. In Google Drive, right-click the folder → "Organize" → "Add shortcut to Drive"<br>
+        3. Or paste the folder ID directly below
+      </div>
+      <div class="input-row" style="margin-top:12px;">
+        <input type="text" id="folder-id-input" placeholder="Paste Google Drive folder ID here..." />
+        <button class="btn btn-primary btn-sm" onclick="useFolderId()">Use ID</button>
+      </div>
+      <div class="alert alert-info" style="margin-top:8px;">The folder ID is the long string in the Drive URL after /folders/ — e.g. <code>1M09XwYzNYPhXvoCbX3jPSpdH4n46JFwB</code></div>`;
       return;
     }
 
-    const folder = data.files[0];
-    folderId = folder.id;
+    folderId = foundFolder.id;
 
     res.innerHTML = `
       <div class="folder-info">
         <div class="folder-icon">📁</div>
         <div class="folder-details">
-          <div class="folder-name">${folder.name}</div>
-          <div class="folder-count">Found — loading contents...</div>
+          <div class="folder-name">${foundFolder.name} ${foundFolder.isShortcut ? '(shortcut resolved ✓)' : ''}</div>
+          <div class="folder-count">Folder ID: ${folderId}</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="loadPhotos()">Load Photos →</button>
       </div>`;
@@ -936,46 +981,163 @@ async function findFolder() {
     document.getElementById('browse-section').style.display = 'block';
 
   } catch(e) {
-    res.innerHTML = `<div class="alert alert-error">Error: ${e.message}. Check your access token and try again.</div>`;
+    res.innerHTML = `<div class="alert alert-error">Error: ${e.message}<br><br>
+      Try pasting the folder ID directly:
+      <div class="input-row" style="margin-top:8px;">
+        <input type="text" id="folder-id-input" placeholder="Folder ID from Drive URL..." />
+        <button class="btn btn-primary btn-sm" onclick="useFolderId()">Use ID</button>
+      </div></div>`;
   }
+}
+
+function useFolderId() {
+  const id = (document.getElementById('folder-id-input') || {}).value;
+  if (!id) return;
+  folderId = id.trim();
+  document.getElementById('folder-result').innerHTML = `
+    <div class="folder-info">
+      <div class="folder-icon">📁</div>
+      <div class="folder-details">
+        <div class="folder-name">SUNFLOWER CONTENT GALLERY</div>
+        <div class="folder-count">Using ID: ${folderId}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadPhotos()">Load Photos →</button>
+    </div>`;
+  document.getElementById('exclusion-section').style.display = 'block';
+  document.getElementById('browse-section').style.display = 'block';
 }
 
 async function loadPhotos() {
   if (!folderId || !accessToken) return;
 
   const wrap = document.getElementById('photo-grid-wrap');
-  wrap.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>Loading photos from Drive...</div><div class="progress-bar" style="max-width:200px;margin:10px auto 0;"><div class="progress-fill" id="load-progress" style="width:5%"></div></div><div id="load-status" style="font-size:0.75rem;margin-top:6px;"></div></div>';
+  wrap.innerHTML = `<div class="loading-state">
+    <div class="spinner"></div>
+    <div id="load-msg">Connecting to Drive folder...</div>
+    <div class="progress-bar" style="max-width:260px;margin:10px auto 0;">
+      <div class="progress-fill" id="load-progress" style="width:5%"></div>
+    </div>
+    <div id="load-status" style="font-size:0.75rem;margin-top:6px;color:var(--gray);"></div>
+  </div>`;
 
   allPhotos = [];
   let pageToken = null;
   let page = 0;
+  let errorDetail = null;
+
+  const setMsg = (msg, sub) => {
+    const m = document.getElementById('load-msg');
+    const s = document.getElementById('load-status');
+    if (m) m.textContent = msg;
+    if (s && sub) s.textContent = sub;
+  };
+
+  const setProgress = (pct) => {
+    const p = document.getElementById('load-progress');
+    if (p) p.style.width = pct + '%';
+  };
 
   try {
+    setMsg('Checking folder access...', `Folder ID: ${folderId}`);
+    setProgress(10);
+
+    // First verify we can access this folder
+    const checkResp = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType&supportsAllDrives=true`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const checkData = await checkResp.json();
+
+    if (checkData.error) {
+      throw new Error(`Cannot access folder: ${checkData.error.message} (code ${checkData.error.code})`);
+    }
+
+    setMsg(`Loading files from "${checkData.name}"...`, 'This may take a moment for large libraries');
+    setProgress(20);
+
     do {
-      let url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(`'${folderId}' in parents and trashed=false and (mimeType contains 'image/' or mimeType contains 'video/')`)}&fields=files(id,name,mimeType,thumbnailLink,webContentLink,size),nextPageToken&pageSize=100`;
+      let url = `https://www.googleapis.com/drive/v3/files`
+        + `?q=${encodeURIComponent(`'${folderId}' in parents and trashed=false`)}`
+        + `&fields=files(id,name,mimeType,thumbnailLink,size),nextPageToken`
+        + `&pageSize=100`
+        + `&includeItemsFromAllDrives=true`
+        + `&supportsAllDrives=true`;
       if (pageToken) url += `&pageToken=${pageToken}`;
 
       const resp = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
       const data = await resp.json();
 
-      if (data.files) allPhotos.push(...data.files);
+      if (data.error) throw new Error(`API error: ${data.error.message}`);
+
+      if (data.files) {
+        // Include images, videos, and subfolders for recursive loading
+        const mediaFiles = data.files.filter(f =>
+          f.mimeType && (f.mimeType.includes('image/') || f.mimeType.includes('video/'))
+        );
+        const subfolders = data.files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+
+        allPhotos.push(...mediaFiles);
+
+        // Load subfolders recursively (one level deep)
+        for (const sub of subfolders) {
+          setMsg(`Loading subfolder: ${sub.name}...`, `${allPhotos.length} files found so far`);
+          let subToken = null;
+          do {
+            let subUrl = `https://www.googleapis.com/drive/v3/files`
+              + `?q=${encodeURIComponent(`'${sub.id}' in parents and trashed=false`)}`
+              + `&fields=files(id,name,mimeType,thumbnailLink,size),nextPageToken`
+              + `&pageSize=100`
+              + `&includeItemsFromAllDrives=true`
+              + `&supportsAllDrives=true`;
+            if (subToken) subUrl += `&pageToken=${subToken}`;
+            const subResp = await fetch(subUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+            const subData = await subResp.json();
+            if (subData.files) {
+              allPhotos.push(...subData.files.filter(f =>
+                f.mimeType && (f.mimeType.includes('image/') || f.mimeType.includes('video/'))
+              ));
+            }
+            subToken = subData.nextPageToken;
+          } while (subToken);
+        }
+      }
+
       pageToken = data.nextPageToken;
       page++;
 
-      const prog = document.getElementById('load-progress');
-      const stat = document.getElementById('load-status');
-      if (prog) prog.style.width = Math.min(90, page * 15) + '%';
-      if (stat) stat.textContent = `${allPhotos.length} files found...`;
+      setProgress(Math.min(90, 20 + page * 10));
+      setMsg(`Loading files...`, `${allPhotos.length} photos/videos found so far — page ${page}`);
 
     } while (pageToken);
 
-    const prog = document.getElementById('load-progress');
-    if (prog) prog.style.width = '100%';
+    setProgress(100);
 
+    if (allPhotos.length === 0) {
+      wrap.innerHTML = `<div class="alert alert-error">
+        No image or video files found in this folder.<br><br>
+        This usually means the folder contains subfolders only, or the files aren't directly accessible. 
+        Try pasting the ID of a subfolder that contains the actual photos.
+        <div class="input-row" style="margin-top:10px;">
+          <input type="text" id="folder-id-input" placeholder="Subfolder ID..." />
+          <button class="btn btn-primary btn-sm" onclick="useFolderId()">Use This Folder</button>
+        </div>
+      </div>`;
+      return;
+    }
+
+    setMsg(`Found ${allPhotos.length} files! Rendering...`, '');
     setTimeout(() => renderPhotoGrid(), 300);
 
   } catch(e) {
-    wrap.innerHTML = `<div class="alert alert-error">Failed to load photos: ${e.message}</div>`;
+    wrap.innerHTML = `<div class="alert alert-error">
+      <strong>Failed to load photos:</strong> ${e.message}<br><br>
+      <strong>Try this:</strong> Go to your Google Drive, open the SUNFLOWER CONTENT GALLERY folder, 
+      copy the folder ID from the URL (the long string after /folders/), and paste it below.
+      <div class="input-row" style="margin-top:10px;">
+        <input type="text" id="folder-id-input" placeholder="e.g. 1M09XwYzNYPhXvoCbX3jPSpdH4n46JFwB" />
+        <button class="btn btn-primary btn-sm" onclick="useFolderId()">Use This ID</button>
+      </div>
+    </div>`;
   }
 }
 
