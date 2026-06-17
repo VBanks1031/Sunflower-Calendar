@@ -1019,6 +1019,7 @@
           <button class="btn btn-sm btn-secondary" onclick="showFeedbackPanel()">Give Feedback & Regenerate</button>
           <button class="btn btn-sm btn-outline" onclick="showSettingsAndRegen()">Change Settings</button>
           <button class="btn btn-sm btn-outline" onclick="shufflePhotos()">Shuffle Photo Assignments</button>
+          <span style="font-size:0.72rem;color:#7a5800;margin-left:auto;">🔒 Click any post → "Approve & Lock" to protect it from regenerating</span>
         </div>
         <div id="feedback-panel" style="display:none;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem;">
           <div style="font-size:0.9rem;font-weight:700;color:var(--green);margin-bottom:12px;">What needs to change?</div>
@@ -1805,7 +1806,9 @@ function shufflePhotos() {
     [selectedList[i], selectedList[j]] = [selectedList[j], selectedList[i]];
   }
   let pi = 0;
+  let skipped = 0;
   for (const post of calendarData) {
+    if (post.locked) { skipped++; continue; }
     post.photo = selectedList[pi % selectedList.length];
     post.photoName = post.photo ? post.photo.name : 'TBD';
     post.photoThumb = post.photo ? post.photo.thumbnailLink : null;
@@ -1813,7 +1816,8 @@ function shufflePhotos() {
   }
   renderCalGrid();
   renderCalList();
-  const bar = document.querySelector('#calendar-output > div:first-child span');
+  saveToStorage();
+  toast(skipped > 0 ? `🔀 Photos shuffled (${skipped} approved post${skipped > 1 ? 's' : ''} kept as-is)` : '🔀 Photos shuffled');
 }
 
 function applyFeedback() {
@@ -1881,10 +1885,17 @@ async function analyzeSelected() {
   const statusEl = document.getElementById('gen-status');
   const progEl = document.getElementById('gen-progress');
 
+  // Preserve any locked/approved posts by date so they survive a rebuild
+  const lockedByDate = {};
+  for (const post of calendarData) {
+    if (post.locked) lockedByDate[post.dateStr] = post;
+  }
+  const hadLocked = Object.keys(lockedByDate).length > 0;
+
   const steps = [
     [20, 'Reading photo metadata...'],
     [40, 'Building posting schedule...'],
-    [65, 'Assigning captions from the Sunflower voice library (225 unique lines)...'],
+    [65, hadLocked ? 'Assigning captions (keeping your approved posts untouched)...' : 'Assigning captions from the Sunflower voice library...'],
     [85, 'Checking for repeats across the full calendar...'],
     [100, 'Calendar ready 🌻']
   ];
@@ -1898,6 +1909,21 @@ async function analyzeSelected() {
   buildCalendarSkeleton();
   assignNonRepeatingCaptions();
 
+  // Restore locked posts onto matching dates so approved captions/photos never get overwritten
+  if (hadLocked) {
+    for (const post of calendarData) {
+      const locked = lockedByDate[post.dateStr];
+      if (locked) {
+        post.caption = locked.caption;
+        post.photo = locked.photo;
+        post.photoName = locked.photoName;
+        post.photoThumb = locked.photoThumb;
+        post.locked = true;
+        post.captionHistory = locked.captionHistory;
+      }
+    }
+  }
+
   renderStats();
   renderCalGrid();
   renderCalList();
@@ -1906,6 +1932,8 @@ async function analyzeSelected() {
   await new Promise(r => setTimeout(r, 300));
   document.getElementById('generating-state').style.display = 'none';
   document.getElementById('calendar-output').classList.remove('hidden');
+
+  if (hadLocked) toast(`🔒 Kept ${Object.keys(lockedByDate).length} approved post${Object.keys(lockedByDate).length > 1 ? 's' : ''} unchanged`);
 }
 
 // ── CAPTION ASSIGNMENT ─────────────────────────────────────────────────
@@ -2080,13 +2108,14 @@ function renderStats() {
   const feeds = calendarData.filter(p => p.type === 'Feed Photo').length;
   const reels = calendarData.filter(p => p.type === 'Reel').length;
   const stories = calendarData.filter(p => p.type === 'Story').length;
+  const approved = calendarData.filter(p => p.locked).length;
 
   stats.innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Posts</div></div>
     <div class="stat-card"><div class="stat-num">${feeds}</div><div class="stat-label">Feed Photos</div></div>
     <div class="stat-card"><div class="stat-num">${reels}</div><div class="stat-label">Reels</div></div>
     <div class="stat-card"><div class="stat-num">${stories}</div><div class="stat-label">Stories</div></div>
-    <div class="stat-card"><div class="stat-num">90</div><div class="stat-label">Days Covered</div></div>
+    <div class="stat-card" style="${approved > 0 ? 'background:#E8F5E9;' : ''}"><div class="stat-num" style="${approved > 0 ? 'color:#2D5A27;' : ''}">${approved}/${total}</div><div class="stat-label">🔒 Approved</div></div>
   `;
 }
 
@@ -2114,8 +2143,8 @@ function renderCalGrid() {
         const typeClass = post.type === 'Story' ? 'story' : post.type === 'Reel' ? 'reel' : '';
         html += `<div class="cal-cell">
           <div class="cal-date">${post.dateStr}${post.milestone ? ` · ${post.milestone}` : ''}</div>
-          <div class="cal-post ${typeClass}" onclick="showPostDetail('${post.id}')">
-            <div class="post-type">${post.type}</div>
+          <div class="cal-post ${typeClass}" onclick="showPostDetail('${post.id}')" style="${post.locked ? 'box-shadow: inset 0 0 0 1.5px #2D5A27;' : ''}">
+            <div class="post-type">${post.locked ? '🔒 ' : ''}${post.type}</div>
             <div class="post-title">${post.photoName.replace(/\.[^.]+$/,'').substring(0,30)}</div>
             <div class="post-pillar">${pillarObj.label}</div>
           </div>
@@ -2151,6 +2180,7 @@ function renderCalList() {
             <span style="background:var(--green-light);color:var(--green);border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">${post.type}</span>
             <span style="background:var(--gold-light);color:#7a5800;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">${pillarObj.label}</span>
             ${post.milestone ? `<span style="background:#FEF9E7;color:var(--amber);border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">${post.milestone}</span>` : ''}
+            ${post.locked ? `<span style="background:#E8F5E9;color:#2D5A27;border-radius:10px;padding:2px 8px;font-size:0.68rem;font-weight:700;">🔒 Approved</span>` : ''}
           </div>
           <div style="font-size:0.82rem;color:var(--dark);margin-top:4px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${post.caption.substring(0,100)}...</div>
           <div style="font-size:0.72rem;color:var(--gray);margin-top:2px;">📎 ${post.photoName.replace(/\.[^.]+$/,'')}</div>
@@ -2334,6 +2364,7 @@ function showPostDetail(id) {
   if (!post) return;
   const panel = document.getElementById('post-detail');
   const pillarObj = PILLARS.find(p => p.id === post.pillar);
+  const isLocked = !!post.locked;
 
   panel.innerHTML = `
     <div class="post-detail-header">
@@ -2343,6 +2374,7 @@ function showPostDetail(id) {
           <span class="meta-chip">${pillarObj.label}</span>
           <span class="meta-chip">📎 ${post.photoName.replace(/\.[^.]+$/,'')}</span>
           ${post.milestone ? `<span class="meta-chip" style="background:var(--amber-light);color:var(--amber);">${post.milestone}</span>` : ''}
+          ${isLocked ? `<span class="meta-chip" style="background:#E8F5E9;color:#2D5A27;">🔒 Approved — won't change on regenerate</span>` : ''}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
@@ -2353,15 +2385,79 @@ function showPostDetail(id) {
     <div style="font-size:0.78rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Caption</div>
     <div class="caption-box" id="caption-${id}" contenteditable="true" onblur="saveCaption('${id}', this.textContent)">${post.caption}</div>
     <div class="hashtag-row">${post.hashtags}</div>
+
     <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-primary" onclick="regenerateOnePost('${id}')">🔄 Try Another Caption</button>
+      <button class="btn btn-sm ${isLocked ? 'btn-secondary' : 'btn-outline'}" onclick="toggleLock('${id}')">${isLocked ? '🔒 Approved' : '🔓 Approve & Lock'}</button>
       <button class="btn btn-sm btn-secondary" onclick="copyCaption('${id}')">📋 Copy Caption</button>
-      <button class="btn btn-sm btn-outline" onclick="openSwapModal('${id}')">🔄 Swap Photo</button>
       <button class="btn btn-sm btn-outline" onclick="document.getElementById('post-detail').classList.remove('visible')">Close</button>
     </div>
-    <div style="font-size:0.72rem;color:var(--gray);margin-top:8px;">💡 Tip: Click the caption text above to edit it directly</div>
+
+    <div style="margin-top:1rem;">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Tell it what to change</div>
+      <div class="input-row">
+        <input type="text" id="post-note-${id}" placeholder="e.g. 'mention Eclipse specifically' or 'make it shorter'" style="flex:1;" />
+        <button class="btn btn-sm btn-secondary" onclick="regenerateOnePost('${id}', document.getElementById('post-note-${id}').value)">Apply</button>
+      </div>
+    </div>
+
+    <div style="font-size:0.72rem;color:var(--gray);margin-top:10px;">💡 Click the caption text to edit it directly and word-for-word. Use "Try Another Caption" to swap in a different option from the library. "Approve & Lock" protects this post from bulk regenerate.</div>
   `;
   panel.classList.add('visible');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function toggleLock(id) {
+  const post = calendarData.find(p => p.id === id);
+  if (!post) return;
+  post.locked = !post.locked;
+  saveToStorage();
+  showPostDetail(id);
+  renderCalGrid();
+  renderCalList();
+  toast(post.locked ? '🔒 Post approved and locked' : '🔓 Lock removed');
+}
+
+// Pulls a caption this post hasn't used yet from its pillar's pool.
+// If a note is given, it tries to prioritize captions matching keywords in the note
+// (e.g. mentions of a strain name, "shorter", "longer") before falling back to any unused one.
+function regenerateOnePost(id, note) {
+  const post = calendarData.find(p => p.id === id);
+  if (!post) return;
+
+  post.captionHistory = post.captionHistory || [];
+  if (post.caption) post.captionHistory.push(post.caption);
+
+  const pool = CAPTIONS[post.pillar].filter(c => c !== post.caption && !post.captionHistory.includes(c));
+  let candidates = pool.length > 0 ? pool : CAPTIONS[post.pillar].filter(c => c !== post.caption);
+
+  if (note && note.trim()) {
+    const noteLower = note.toLowerCase();
+    const keywordHints = ['eclipse','golden hour','morning bloom','eva','initiative','molecular farms','sunflower'];
+    const matchedKeyword = keywordHints.find(k => noteLower.includes(k));
+    if (matchedKeyword) {
+      const filtered = candidates.filter(c => c.toLowerCase().includes(matchedKeyword));
+      if (filtered.length > 0) candidates = filtered;
+    }
+    if (noteLower.includes('shorter') || noteLower.includes('short')) {
+      const sorted = [...candidates].sort((a,b) => a.length - b.length);
+      candidates = sorted.slice(0, Math.max(3, Math.ceil(sorted.length / 3)));
+    }
+    if (noteLower.includes('longer') || noteLower.includes('detail')) {
+      const sorted = [...candidates].sort((a,b) => b.length - a.length);
+      candidates = sorted.slice(0, Math.max(3, Math.ceil(sorted.length / 3)));
+    }
+  }
+
+  if (candidates.length === 0) candidates = CAPTIONS[post.pillar];
+  const next = candidates[Math.floor(Math.random() * candidates.length)];
+  post.caption = next;
+
+  saveToStorage();
+  renderCalGrid();
+  renderCalList();
+  showPostDetail(id);
+  toast('🌻 New caption applied');
 }
 
 function saveCaption(id, text) {
