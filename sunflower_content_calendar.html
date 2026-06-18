@@ -876,75 +876,6 @@
         <span class="step-num">3.5</span>
         Calendar Settings
       </div>
-      <div class="section-desc">Customize your calendar before generating. These settings control the date range, posting frequency, and content mix.</div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1.5rem;">
-
-        <div>
-          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Start Date</label>
-          <input type="date" id="cal-start-date" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;" />
-        </div>
-
-        <div>
-          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Duration</label>
-          <select id="cal-duration" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
-            <option value="30">30 days</option>
-            <option value="60">60 days</option>
-            <option value="90" selected>90 days</option>
-          </select>
-        </div>
-
-        <div>
-          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Posts Per Week</label>
-          <select id="cal-freq" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
-            <option value="2">2x per week</option>
-            <option value="3" selected>3x per week</option>
-            <option value="4">4x per week</option>
-            <option value="5">5x per week</option>
-          </select>
-        </div>
-
-        <div>
-          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Post Type Mix</label>
-          <select id="cal-mix" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
-            <option value="balanced" selected>Balanced (Feed + Reels + Stories)</option>
-            <option value="feed-heavy">Feed Heavy (mostly photos)</option>
-            <option value="reels-heavy">Reels Heavy (video forward)</option>
-            <option value="feed-only">Feed Only (no Reels/Stories)</option>
-          </select>
-        </div>
-
-      </div>
-
-      <div style="margin-bottom:1.5rem;">
-        <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:10px;">Pillar Priority</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;" id="pillar-toggles">
-          <label class="pillar-toggle" data-pillar="ritual"><input type="checkbox" checked /> Ritual & Routine</label>
-          <label class="pillar-toggle" data-pillar="education"><input type="checkbox" checked /> Education & Science</label>
-          <label class="pillar-toggle" data-pillar="eva"><input type="checkbox" checked /> Eva's World</label>
-          <label class="pillar-toggle" data-pillar="community"><input type="checkbox" checked /> Community & Impact</label>
-          <label class="pillar-toggle" data-pillar="culture"><input type="checkbox" checked /> Culture & Beauty</label>
-        </div>
-      </div>
-
-      <div style="margin-bottom:1rem;">
-        <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Key Milestone Dates (optional)</label>
-        <div id="milestone-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
-        <div class="input-row">
-          <input type="date" id="milestone-date" style="padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;" />
-          <input type="text" id="milestone-label" placeholder="Label (e.g. Cannabis Fest)" style="flex:1;" />
-          <button class="btn btn-sm btn-secondary" onclick="addMilestone()">+ Add</button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- STEP 3.5: CALENDAR SETTINGS -->
-    <div class="section" id="settings-section" style="display:none;">
-      <div class="section-title">
-        <span class="step-num">3.5</span>
-        Calendar Settings
-      </div>
       <div class="section-desc">Customize before generating. Control the date range, posting frequency, and content mix.</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1.5rem;">
         <div>
@@ -975,6 +906,15 @@
             <option value="feed-heavy">Feed Heavy (mostly photos)</option>
             <option value="reels-heavy">Reels Heavy (video forward)</option>
             <option value="feed-only">Feed Only (no Reels/Stories)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;">Caption Length</label>
+          <select id="cal-caption-length" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--cream);font-family:'Nunito Sans',sans-serif;font-size:0.85rem;">
+            <option value="any">Any length</option>
+            <option value="short" selected>Short & punchy</option>
+            <option value="long">Longer & detailed</option>
           </select>
         </div>
       </div>
@@ -1937,24 +1877,38 @@ async function analyzeSelected() {
 }
 
 // ── CAPTION ASSIGNMENT ─────────────────────────────────────────────────
-// Every pillar has its own shuffled queue of ~45 hand-written captions.
+// Every pillar has its own shuffled queue of hand-written captions, filtered
+// by the selected length preference (short/long/any) before assignment.
 // A caption can never repeat for a given pillar until every other caption
-// in that pillar's pool has been used first — at which point the pool is
-// reshuffled for a fresh, still-non-repeating pass. With 45 captions per
-// pillar and 5 pillars, this covers years of posting at 3x/week before
-// any caption is seen twice for the same pillar.
+// in that pillar's filtered pool has been used first — at which point the
+// pool reshuffles for a fresh, still-non-repeating pass.
+function getCaptionPool(pillar) {
+  const lengthPref = (document.getElementById('cal-caption-length') || {}).value || 'any';
+  const all = CAPTIONS[pillar];
+  if (lengthPref === 'any') return all;
+
+  // Sort by character length, then take the shorter or longer half —
+  // with a floor so a pillar never ends up with too few options.
+  const sorted = [...all].sort((a, b) => a.length - b.length);
+  const minPoolSize = Math.max(8, Math.ceil(sorted.length / 2));
+
+  if (lengthPref === 'short') return sorted.slice(0, minPoolSize);
+  if (lengthPref === 'long') return sorted.slice(sorted.length - minPoolSize);
+  return all;
+}
+
 function assignNonRepeatingCaptions() {
   const captionQueues = {};
   const captionCursor = {};
   for (const pillar of Object.keys(CAPTIONS)) {
-    captionQueues[pillar] = shuffleArray([...CAPTIONS[pillar]]);
+    captionQueues[pillar] = shuffleArray([...getCaptionPool(pillar)]);
     captionCursor[pillar] = 0;
   }
 
   function nextCaption(pillar) {
     const queue = captionQueues[pillar];
     if (captionCursor[pillar] >= queue.length) {
-      captionQueues[pillar] = shuffleArray([...CAPTIONS[pillar]]);
+      captionQueues[pillar] = shuffleArray([...getCaptionPool(pillar)]);
       captionCursor[pillar] = 0;
     }
     const cap = captionQueues[pillar][captionCursor[pillar]];
@@ -2428,8 +2382,10 @@ function regenerateOnePost(id, note) {
   post.captionHistory = post.captionHistory || [];
   if (post.caption) post.captionHistory.push(post.caption);
 
-  const pool = CAPTIONS[post.pillar].filter(c => c !== post.caption && !post.captionHistory.includes(c));
-  let candidates = pool.length > 0 ? pool : CAPTIONS[post.pillar].filter(c => c !== post.caption);
+  // Start from the length-filtered pool (respects the Caption Length setting) unless the note overrides it
+  const basePool = getCaptionPool(post.pillar);
+  const pool = basePool.filter(c => c !== post.caption && !post.captionHistory.includes(c));
+  let candidates = pool.length > 0 ? pool : basePool.filter(c => c !== post.caption);
 
   if (note && note.trim()) {
     const noteLower = note.toLowerCase();
